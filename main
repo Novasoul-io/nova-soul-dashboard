@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Metrics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #1a202c;
+            color: #e2e8f0;
+            font-family: 'Arial', sans-serif;
+        }
+        .metric-card {
+            background-color: #2d3748;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        #chart-container {
+            max-width: 800px;
+            margin: 40px auto;
+            background-color: #2d3748;
+            padding: 20px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10">
+    <h1 class="text-4xl font-bold text-indigo-400 mb-8">Custom Metrics Dashboard</h1>
+
+    <!-- Metric Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl px-4">
+        <div class="metric-card">
+            <h2 class="text-xl font-semibold text-red-400">Metric 1</h2>
+            <p id="metric1" class="text-3xl mt-2">Loading...</p>
+        </div>
+        <div class="metric-card">
+            <h2 class="text-xl font-semibold text-red-400">Metric 2</h2>
+            <p id="metric2" class="text-3xl mt-2">Loading...</p>
+        </div>
+        <div class="metric-card">
+            <h2 class="text-xl font-semibold text-red-400">Metric 3</h2>
+            <p id="metric3" class="text-3xl mt-2">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Chart -->
+    <div id="chart-container">
+        <canvas id="metricsChart"></canvas>
+    </div>
+
+    <script>
+        // Colors (generic for now)
+        const colors = {
+            bg: '#1a202c',
+            card: '#2d3748',
+            text: '#e2e8f0',
+            accent: '#e53e3e', // Red for now, swap as needed
+            chart1: '#e53e3e',
+            chart2: '#ed8936',
+            chart3: '#3182ce'
+        };
+
+        // Sample API Fetch (GitHub as an example)
+        async function fetchSampleData() {
+            const url = 'https://api.github.com/users/Novasoul-io/repos'; // Public GitHub API
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                // Example Metrics
+                document.getElementById('metric1').textContent = `${data.length} Repos`;
+                document.getElementById('metric2').textContent = `${data.reduce((sum, repo) => sum + (repo.stargazers_count || 0), 0)} Stars`;
+                document.getElementById('metric3').textContent = `${data.reduce((sum, repo) => sum + (repo.forks_count || 0), 0)} Forks`;
+
+                // Update Chart
+                updateChart({
+                    metric1: data.length,
+                    metric2: data.reduce((sum, repo) => sum + (repo.stargazers_count || 0), 0),
+                    metric3: data.reduce((sum, repo) => sum + (repo.forks_count || 0), 0)
+                });
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.querySelectorAll('.metric-card p').forEach(el => el.textContent = 'Error');
+            }
+        }
+
+        // Chart Setup
+        const ctx = document.getElementById('metricsChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Metric 1', 'Metric 2', 'Metric 3'],
+                datasets: [{
+                    label: 'Current Values',
+                    data: [0, 0, 0],
+                    backgroundColor: [colors.chart1, colors.chart2, colors.chart3],
+                    borderColor: colors.text,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: colors.text } },
+                    x: { ticks: { color: colors.text } }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        function updateChart(data) {
+            chart.data.datasets[0].data = [data.metric1, data.metric2, data.metric3];
+            chart.update();
+        }
+
+        // Initial Fetch
+        fetchSampleData();
+        // Refresh every 5 minutes
+        setInterval(fetchSampleData, 300000);
+    </script>
+</body>
+</html>
